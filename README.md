@@ -41,4 +41,5 @@ Stream supports all the features you're used to from Pusher. The biggest enginee
 * Reactions, Threads and Rich URL previews are supported out of the box
 * Unread counts are available at a per channel as well as per member level
 * Stream is GDPR and HIPAA compliant. There are convenient endpoints to integrate GDPR requirements in your app. [GDPR docs](https://getstream.io/chat/docs/gdpr/?language=js)
+* Pusher room limit is set to 500. Stream doesn't have a channel level limit. If you want to have a channel with a million members you can do that.
 
