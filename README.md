@@ -5,6 +5,10 @@ Pusher has decided to shutdown their chat API by April 23rd. This gives their cu
 
 If you need help be sure to contact support@getstream.io
 
+## Migration roadmap
+
+- Engineering teams from Pusher and Stream are currently collaborating to create an easy way to migrate from Pusher to Stream. This document will be updated in the coming days as more information becomes available.
+
 ## Step 1 - Pusher Chatkit Export
 
 1. Download your Chatkit export from the [Pusher Dashboard](https://dashboard.pusher.com/). 
