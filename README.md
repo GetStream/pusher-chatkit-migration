@@ -26,5 +26,16 @@ SDKs are available for PHP, Python, Go, Ruby, Java, JS and Dart.
 
 You'll want to make sure your chat solution works. We've seen customers integrate in as little as 2 days. Though the complexity of this integration really depends on how many platforms you're supporting and how complicated your chat is.
 
+# Differences between Stream & Pusher
+
+Stream supports all the features you're used to from Pusher. The biggest engineering/conceptual differences are:
+
+* Pusher has the concept of private and public rooms. Stream has channels. There are 5 built-in types of channels. The "messaging" channel type is similar to the private room. The "livestream" channel type is similar to the public room. You can also create your own channel types. The channel types allow you to configure permissions (IE you need to be a member of a channel in order to post messages). The channel type also allows you to enable/disable features such as typing indicators etc. [Channel Type Docs](https://getstream.io/chat/docs/channel_features/?language=js)
+* Authorization/Tokens. Stream uses token based authentication. When the user registers or logins your backend will generate a token. This token gives the client side integration access to the chat for that user. Pusher uses a authorization URL based approach. [Token Generation](https://getstream.io/chat/docs/init_and_users/?language=js&q=token#tokens)
+
+# Product Differences
+
+* API uptime, Stream's API has near 100% uptime. On enterprise plans we offer a 99.999% uptime SLA
+* Stream powers chat and feeds for over 500 million end users. We believe in building products to last and you can feel confident relying on our APIs
 
 
