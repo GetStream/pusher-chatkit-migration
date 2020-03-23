@@ -5,13 +5,13 @@ Pusher has decided to shutdown their chat API by April 23rd. This gives their cu
 
 If you need help be sure to contact support@getstream.io
 
-## Step 1 - Downloading your export
+## Step 1 - Pusher Chatkit Export
 
 1. Download your Chatkit export from the [Pusher Dashboard](https://dashboard.pusher.com/). 
 2. Create an account on [getstream.io](https://getstream.io/)
 3. Email support@getstream.io with your Pusher export to get an import started. This typically takes 1 business day. At the moment it might take a bit more time since all Pusher customers need to migrate. That's why we recommend doing this as the first step.
 
-## Step 2 - Follow one of Stream's tutorials
+## Step 2 - Stream Chat Tutorial
 
 - [React Chat Tutorial](https://getstream.io/chat/react-chat/tutorial/)
 - [React Native Chat tutorial](https://getstream.io/chat/react-native-chat/tutorial/)
