@@ -35,7 +35,10 @@ Stream supports all the features you're used to from Pusher. The biggest enginee
 
 # Product Differences
 
-* API uptime, Stream's API has near 100% uptime. On enterprise plans we offer a 99.999% uptime SLA
-* Stream powers chat and feeds for over 500 million end users. We believe in building products to last and you can feel confident relying on our APIs
+* Stream powers chat and feeds for over 500 million end users. We believe in building products to last and you can feel confident relying on our APIs. On enterprise deals we also have a code escrow clause in place to ensure you never end up in a situation like we're seeing right now with Pusher.
+* [API uptime](http://status.getstream.io/), Stream's API has near 100% uptime. On enterprise plans we offer a 99.999% uptime SLA
+* Reactions, Threads and Rich URL previews are supported out of the box
+* Unread counts are available at a per channel as well as per member level
+
 
 
