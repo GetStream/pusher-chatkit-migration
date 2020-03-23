@@ -36,9 +36,9 @@ Stream supports all the features you're used to from Pusher. The biggest enginee
 # Product Differences
 
 * Stream powers chat and feeds for over 500 million end users. We believe in building products to last and you can feel confident relying on our APIs. On enterprise deals we also have a code escrow clause in place to ensure you never end up in a situation like we're seeing right now with Pusher.
+* Frontend components: Our SDKs for iOS, Android, Flutter, React and React Native provide both low level chat events as well as fully featured UI components. This allows you to build chat in days instead of months. (which is important since you have 30 days for this migration)
 * [API uptime](http://status.getstream.io/), Stream's API has near 100% uptime. On enterprise plans we offer a 99.999% uptime SLA
 * Reactions, Threads and Rich URL previews are supported out of the box
 * Unread counts are available at a per channel as well as per member level
-
-
+* Stream is GDPR and HIPAA compliant. There are convenient endpoints to integrate GDPR requirements in your app. [GDPR docs](https://getstream.io/chat/docs/gdpr/?language=js)
 
