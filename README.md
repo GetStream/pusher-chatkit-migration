@@ -36,6 +36,11 @@ Stream supports all the features you're used to from Pusher. The biggest enginee
 
 * Pusher has the concept of private and public rooms. Stream has channels. There are 5 built-in types of channels. The "messaging" channel type is similar to the private room. The "livestream" channel type is similar to the public room. You can also create your own channel types. The channel types allow you to configure permissions (IE you need to be a member of a channel in order to post messages). The channel type also allows you to enable/disable features such as typing indicators etc. [Channel Type Docs](https://getstream.io/chat/docs/channel_features/?language=js)
 * Authorization/Tokens. Stream uses token based authentication. When the user registers or logins your backend will generate a token. This token gives the client side integration access to the chat for that user. Pusher uses a authorization URL based approach. [Token Generation](https://getstream.io/chat/docs/init_and_users/?language=js&q=token#tokens)
+* Cursors. ChatKit cursors are supported by Stream. On Stream Chat we refer to them as the read state for a user.
+Global unread counts (total unread messages/ total unread channels) across all channels are returned when [establishing a new websocket connection](https://getstream.io/chat/docs/unread/?language=js).
+we also provide unread counts by channel (Room). use this to show a read indicator next to messages. All 
+SDKs support this [out of the box](https://getstream.io/chat/docs/unread_channel/?language=js).
+
 
 # Product Differences
 
