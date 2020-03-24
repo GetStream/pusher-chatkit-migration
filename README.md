@@ -41,7 +41,6 @@ Global unread counts (total unread messages/total unread channels) across all ch
 we also provide unread counts by channel (Room). use this to show a read indicator next to messages. All 
 SDKs support this [out of the box](https://getstream.io/chat/docs/unread_channel/?language=js).
 
-
 # Product Differences
 
 * Stream powers chat and feeds for over 500 million end users. We believe in building products to last and you can feel confident relying on our APIs. On enterprise deals we also have a code escrow clause in place to ensure you never end up in a situation like we're seeing right now with Pusher.
@@ -50,5 +49,6 @@ SDKs support this [out of the box](https://getstream.io/chat/docs/unread_channel
 * Reactions, Threads and Rich URL previews are supported out of the box
 * Unread counts are available at a per channel as well as per member level
 * Stream is GDPR and HIPAA compliant. There are convenient endpoints to integrate GDPR requirements in your app. [GDPR docs](https://getstream.io/chat/docs/gdpr/?language=js)
+* Typing indicator events work in simillar way. users are able to susbcribe to `typing.start` and `typing.stop` [events](https://getstream.io/chat/docs/typing_indicators/?language=js)
 * Pusher room limit is set to 500. Stream doesn't have a channel level limit. If you want to have a channel with a million members you can do that.
 
