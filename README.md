@@ -17,7 +17,7 @@ If you need help be sure to contact support@getstream.io
 
 ## Step 2 - Stream Chat Tutorial
 
-Once your export from Pusher Chatkit has been successfully imported into to the Stream platform you're ready to start building your app. Follow one of our tutorials below to get started.
+Once your [Chatkit Export](https://github.com/GetStream/pusher-chatkit-migration/blob/master/README.md#step-1---pusher-chatkit-export) has been successfully imported into to the Stream platform you're ready to start building your app. Follow one of our tutorials below to get started.
 
 - [React Chat Tutorial](https://getstream.io/chat/react-chat/tutorial/)
 - [React Native Chat tutorial](https://getstream.io/chat/react-native-chat/tutorial/)
