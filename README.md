@@ -7,7 +7,9 @@ If you need help be sure to contact support@getstream.io
 
 ## Migration roadmap
 
-- Engineering teams from Pusher and Stream are currently collaborating to create an easy way to migrate from Pusher to Stream. This document will be updated in the coming days as more information becomes available.
+- March 26th, we received an example export from Pusher. Our team is adding support for this export format in [Stream's import systems](https://getstream.io/chat/docs/import/?language=js) 
+- Engineering teams from Pusher and Stream are currently collaborating to create an easy way to migrate from Pusher to Stream
+
 
 ## Step 1 - Pusher Chatkit Export
 
