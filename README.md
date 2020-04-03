@@ -14,9 +14,9 @@ If you need help be sure to contact support@getstream.io
 
 ## Step 1 - Pusher Chatkit Export
 
-1. Download your Chatkit export from the [Pusher Dashboard](https://dashboard.pusher.com/). 
+1. Download your Chatkit export by contacting [Pusher Customer Support](support@pusher.com). 
 2. Create an account on [getstream.io](https://getstream.io/)
-3. Email support@getstream.io with your Pusher export to get an import started. This typically takes 1 business day. At the moment it might take a bit more time since all Pusher customers need to migrate. That's why we recommend doing this as the first step.
+3. Email support@getstream.io with your Pusher export to get an import started. This typically takes 1 business day. At the moment it might take a bit more time since all Pusher customers need to migrate. That's why we recommend doing this as the first step. (note that we can run imports for you even if you're not yet on a paid account.)
 
 ## Step 2 - Stream Chat Tutorial
 
