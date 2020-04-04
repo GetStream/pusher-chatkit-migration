@@ -79,9 +79,21 @@ class StreamSync {
                     await parent.handleCreateMessage(m)
                 })
             },
+            "v1.messages_deleted": function (event) {
+                event.payload.message_ids.forEach(async function (id) {
+                    await parent.streamClient().deleteUser(id.toString())
+                })
+            },
             "v1.users_created": function (event) {
                 event.payload.users.forEach(async function (u) {
                     await parent.handleCreateUser(u)
+                })
+            },
+            "v1.users_deleted":function (event) {
+                event.payload.user_ids.forEach(async function (id) {
+                    await parent.streamClient().deleteUser(id, {
+                        mark_messages_deleted: false,
+                    });
                 })
             },
             "v1.users_added_to_room": async function (event) {
