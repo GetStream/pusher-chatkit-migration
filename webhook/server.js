@@ -87,7 +87,7 @@ class StreamSync {
             "v1.users_added_to_room": async function (event) {
                 const room = event.payload.room
                 const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
-                let members = [];
+                const members = [];
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
@@ -98,14 +98,19 @@ class StreamSync {
             "v1.user_left_room":async function(event){
                 const room = event.payload.room
                 const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
-                // ensure users exists
-                let members = [];
+                const members = [];
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
                     await parent.handleCreateUser(u)
                 })
                 await channel.removeMembers(members)
+            },
+            "v1.rooms_deleted":async function (event) {
+                //this is unfortunate, we are probably creating the room right before deleting it
+                event.payload.room_ids.forEach(async function (roomId) {
+                   // todo implement me
+                })
             }
         }
     }
