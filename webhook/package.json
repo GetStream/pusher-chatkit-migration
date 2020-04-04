@@ -4,6 +4,7 @@
     "body-parser": "^1.19.0",
     "crypto": "^1.0.1",
     "express": "^4.17.1",
+    "lru-cache": "^5.1.1",
     "stream-chat": "^1.7.0"
   }
 }
