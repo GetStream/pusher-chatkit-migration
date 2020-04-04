@@ -85,13 +85,27 @@ class StreamSync {
                 })
             },
             "v1.users_added_to_room": async function (event) {
-                const channel = await parent.getOrCreateRoom(event.payload.room)
+                const room = event.payload.room
+                const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 let members = [];
+                // ensure users exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
                     await parent.handleCreateUser(u)
                 })
                 await channel.addMembers(members)
+            },
+            "v1.user_left_room":async function(event){
+                const room = event.payload.room
+                const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
+                // ensure users exists
+                let members = [];
+                // ensure users exists
+                event.payload.users.forEach(async function (u) {
+                    members.push(parent.sanitizeUserId(u.id))
+                    await parent.handleCreateUser(u)
+                })
+                await channel.removeMembers(members)
             }
         }
     }
@@ -158,6 +172,7 @@ class StreamSync {
                 case 'text/plain':
                     streamMessage.text = part.content;
             }
+            //todo handle other message parts
         })
 
         await channel.sendMessage(streamMessage)
