@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@pusher/chatkit-server": "^2.4.0",
+    "body-parser": "^1.19.0",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "stream-chat": "^1.7.0"
+  }
+}
