@@ -85,13 +85,7 @@ class StreamSync {
             "v1.messages_created": async function (event) {
                 event.payload.messages.forEach(async function (m) {
                     const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(m.room_id, m.user_id)))
-                    //console.log(JSON.stringify(m))
-                    try {
                         await channel.sendMessage(await parent.toStreamMessage(channel, m))
-                    } catch (e) {
-                        console.log(e)
-                    }
-
                 })
             },
             "v1.messages_deleted": async function (event) {
@@ -247,9 +241,6 @@ class StreamSync {
 
     // converts a chatKit room to a stream channel
     async toStreamMessage(streamChannel, chatKitMessage) {
-        console.log("\n")
-        console.log(chatKitMessage.id)
-        console.log("\n")
         const streamMessage = {
             id: chatKitMessage.id.toString(),
             user_id: chatKitMessage.user_id,
@@ -263,12 +254,7 @@ class StreamSync {
             if (part.url) {
                 this.addUrlPart(streamMessage, part)
             } else if (part.attachment) {
-                try {
                     await this.addAttachmentPart(streamChannel, streamMessage, part)
-                } catch (e) {
-                    throw (e)
-                }
-
             } else {
                 //inline part
                 switch (part.type) {
@@ -367,7 +353,6 @@ app.use(
 app.post("/pusher-webhooks", async (req, res) => {
     if (verify(req)) {
         const event = JSON.parse(req.body)
-        console.log(req.body)
         if (streamSync.eventHandlers[event.metadata.event_type]) {
             try {
                 await streamSync.eventHandlers[event.metadata.event_type](event)
