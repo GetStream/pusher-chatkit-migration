@@ -5,6 +5,8 @@
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "lru-cache": "^5.1.1",
-    "stream-chat": "^1.7.0"
+    "request": "^2.88.2",
+    "stream-chat": "^1.7.0",
+    "tmp": "^0.1.0"
   }
 }

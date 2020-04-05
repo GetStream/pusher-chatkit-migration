@@ -5,6 +5,10 @@ const streamChat = require("stream-chat")
 const chatKit = require("@pusher/chatkit-server")
 const LRU = require("lru-cache")
 const request = require('request');
+const tmp = require('tmp');
+const fs = require('fs');
+
+
 
 
 const secret = `thesyncim`
@@ -98,7 +102,8 @@ class StreamSync {
             "v1.messages_edited": function (event) {
                 event.payload.messages.forEach(async function (m) {
                     //todo grab the channel
-                    const updated = await parent.toStreamMessage(m)
+                    let channel ={}
+                    const updated = await parent.toStreamMessage(channel,m)
                     await parent.streamClient().updateMessage(updated, updated.user_id)
                 })
             },
@@ -297,15 +302,20 @@ class StreamSync {
             ...part.attachment.custom_data,
         }
 
+        let  tmpObj = tmp.fileSync({ mode: '0644', prefix: 'pusher-download-' });
+
         const {err, response, buffer} = await this.downloadFile(part);
+        fs.appendFileSync(tmpObj.fd,buffer )
+
         if (isImage) {
-            let resp = await streamChannel.sendImage(part.attachment.download_url, part.attachment.id, part.type, streamMessage.user_id)
+            let resp = await streamChannel.sendImage( tmpObj.fd, part.attachment.id, part.type, streamMessage.user_id)
             resp.title_link = resp.file
             resp.image_url = resp.file
         } else {
-            let resp = await streamChannel.sendFile(part.attachment.download_url, part.attachment.id, part.type, streamMessage.user_id)
+            let resp = await streamChannel.sendFile( tmpObj.fd, part.attachment.id, part.type, streamMessage.user_id)
             resp.asset_url = resp.file
         }
+       await tmpobj.removeCallback();
         streamMessage.attachments.push(streamAttachment)
     }
 
@@ -332,6 +342,7 @@ app.use(
 app.post("/pusher-webhooks", (req, res) => {
     if (verify(req)) {
         const event = JSON.parse(req.body)
+        console.log(req.body)
         if (streamSync.eventHandlers[event.metadata.event_type]) {
             try {
                 streamSync.eventHandlers[event.metadata.event_type](event)
