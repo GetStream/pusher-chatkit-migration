@@ -1,3 +1,5 @@
+const fetch = require("node-fetch");
+const FormData = require('form-data');
 const app = require("express")()
 const bodyParser = require("body-parser")
 const crypto = require("crypto")
@@ -77,12 +79,12 @@ class StreamSync {
         this.usersCache = new LRU(5000) // todo read from env
 
         this.eventHandlers = {
-            "v1.rooms_created": function handleRoomsCreatedEvent(event) {
+            "v1.rooms_created": async function handleRoomsCreatedEvent(event) {
                 event.payload.rooms.forEach(async function (room) {
                     await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 })
             },
-            "v1.messages_created": function (event) {
+            "v1.messages_created":async function (event) {
                 event.payload.messages.forEach(async function (m) {
                     const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(m.room_id, m.user_id)))
                     //console.log(JSON.stringify(m))
@@ -94,12 +96,12 @@ class StreamSync {
 
                 })
             },
-            "v1.messages_deleted": function (event) {
+            "v1.messages_deleted":async function (event) {
                 event.payload.message_ids.forEach(async function (id) {
                     await parent.streamClient().deleteMessage(id.toString())
                 })
             },
-            "v1.messages_edited": function (event) {
+            "v1.messages_edited":async function (event) {
                 event.payload.messages.forEach(async function (m) {
                     //todo grab the channel
                     let channel ={}
@@ -107,12 +109,12 @@ class StreamSync {
                     await parent.streamClient().updateMessage(updated, updated.user_id)
                 })
             },
-            "v1.users_created": function (event) {
+            "v1.users_created":async function (event) {
                 event.payload.users.forEach(async function (u) {
                     await parent.createStreamUser(u)
                 })
             },
-            "v1.users_deleted": function (event) {
+            "v1.users_deleted":async function (event) {
                 event.payload.user_ids.forEach(async function (id) {
                     await parent.streamClient().deleteUser(id, {
                         mark_messages_deleted: false,
@@ -303,19 +305,23 @@ class StreamSync {
         }
 
         let  tmpObj = tmp.fileSync({ mode: '0644', prefix: 'pusher-download-' });
+        console.log(tmpObj)
 
         const {err, response, buffer} = await this.downloadFile(part);
+
         fs.appendFileSync(tmpObj.fd,buffer )
 
         if (isImage) {
-            let resp = await streamChannel.sendImage( tmpObj.fd, part.attachment.id, part.type, streamMessage.user_id)
+            const url=`${streamChannel._channelURL()}/image`
+            let resp = await this.sendFile(this.streamClient(),url, tmpObj, part.attachment.id, part.type, streamMessage.user_id)
             resp.title_link = resp.file
             resp.image_url = resp.file
         } else {
-            let resp = await streamChannel.sendFile( tmpObj.fd, part.attachment.id, part.type, streamMessage.user_id)
+            const url=`${streamChannel._channelURL()}/file`
+            let resp = await  this.sendFile(this.streamClient(),url, tmpObj, part.attachment.id, part.type, streamMessage.user_id)
             resp.asset_url = resp.file
         }
-       await tmpobj.removeCallback();
+       await tmpObj.removeCallback();
         streamMessage.attachments.push(streamAttachment)
     }
 
@@ -327,6 +333,27 @@ class StreamSync {
         })
     }
 
+    async sendFile(client,url, uri, name, contentType, user) {
+        const data = new FormData();
+        const params = client._addClientParams();
+        if (user != null) {
+            data.append('user', JSON.stringify({id:user}));
+        }
+        data.append('file', fs.createReadStream(uri.name),
+        {
+            contentType: contentType,
+        });
+        const response = await fetch(`${url}?api_key=${client.key}`, {
+            method: 'post',
+            body: data,
+            headers: new fetch.Headers({
+                Authorization: params.headers.Authorization,
+                'stream-auth-type': client.getAuthType(),
+            }),
+        });
+        response.data = await response.json();
+        return client.handleResponse(response);
+    }
 
 }
 
@@ -339,20 +366,23 @@ app.use(
     }),
 )
 
-app.post("/pusher-webhooks", (req, res) => {
+app.post("/pusher-webhooks", async (req, res) => {
     if (verify(req)) {
         const event = JSON.parse(req.body)
         console.log(req.body)
         if (streamSync.eventHandlers[event.metadata.event_type]) {
             try {
-                streamSync.eventHandlers[event.metadata.event_type](event)
+               await streamSync.eventHandlers[event.metadata.event_type](event)
+                res.sendStatus(200)
             } catch (e) {
                 console.log(`error: ${event.metadata.event_type}\n request body:${req.body}`)
+                res.sendStatus(500)
             }
         } else {
             console.log(`error: No event handler defined for: ${event.metadata.event_type}`)
+            res.sendStatus(200)
         }
-        res.sendStatus(200)
+
     } else {
         console.log("Got an unverified request; ignoring.")
         res.sendStatus(401)
