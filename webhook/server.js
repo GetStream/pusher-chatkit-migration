@@ -68,8 +68,8 @@ class StreamSync {
         this.streamClient = streamClient;
         this.chatKitClient = chatKitClient;
 
-        this.rooms = new LRU(5000)
-        this.users = new LRU(5000)
+        this.roomsCache = new LRU(5000) // todo read from env
+        this.usersCache = new LRU(5000) // todo read from env
 
         this.eventHandlers = {
             "v1.rooms_created": function handleRoomsCreatedEvent(event) {
@@ -85,7 +85,7 @@ class StreamSync {
             },
             "v1.messages_deleted": function (event) {
                 event.payload.message_ids.forEach(async function (id) {
-                    await parent.streamClient().deleteUser(id.toString())
+                    await parent.streamClient().deleteMessage(id.toString())
                 })
             },
             "v1.messages_edited": function (event) {
@@ -96,7 +96,7 @@ class StreamSync {
             },
             "v1.users_created": function (event) {
                 event.payload.users.forEach(async function (u) {
-                    await parent.handleCreateUser(u)
+                    await parent.createStreamUser(u)
                 })
             },
             "v1.users_deleted": function (event) {
@@ -113,7 +113,7 @@ class StreamSync {
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
-                    await parent.handleCreateUser(u)
+                    await parent.createStreamUser(u)
                 })
                 await channel.addMembers(members)
             },
@@ -125,7 +125,7 @@ class StreamSync {
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
-                    await parent.handleCreateUser(u)
+                    await parent.createStreamUser(u)
                 })
                 await channel.removeMembers(members)
             },
@@ -133,10 +133,10 @@ class StreamSync {
                 const room = event.payload.room
                 const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 const members = [];
-                // ensure users exists
+                // ensure usersCache exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
-                    await parent.handleCreateUser(u)
+                    await parent.createStreamUser(u)
                 })
                 await channel.removeMembers(members)
             },
@@ -150,7 +150,7 @@ class StreamSync {
     }
 
     async getChatKitRoom(roomID, user) {
-        const cachedRoom = this.rooms.get(roomID)
+        const cachedRoom = this.roomsCache.get(roomID)
         if (cachedRoom) {
             return cachedRoom
         }
@@ -158,27 +158,28 @@ class StreamSync {
             userId: user,
             roomId: roomID,
         })
-        await this.ensureUsersCreated(room.member_user_ids)
-        this.rooms.set(roomID, room)
+        this.roomsCache.set(roomID, room)
         return room
     }
 
-    async ensureUsersCreated(ids) {
-        // get missing users
+    async ensureMembersExists(ids) {
+
         const missingIds = []
+        const parent = this
 
         for (let i = 0; i < ids.length; i++) {
-            const user = this.users.get(ids[i])
+            const user = this.usersCache.get(ids[i])
             if (!user) {
                 missingIds.push(ids[i])
             }
         }
+
+        // get missing users from cache
         if (missingIds.length > 0) {
             const loadedUsers = await this.chatKitClient().getUsersById({
                 userIds: missingIds
             })
-            console.log(loadedUsers)
-            const parent = this
+
             const users = []
             loadedUsers.forEach(function (u) {
                 users.push(parent.toStreamUser(u))
@@ -186,25 +187,28 @@ class StreamSync {
             await this.streamClient().updateUsers(users)
 
             users.forEach(function (u) {
-                parent.users.set(u.id,u)
+                // update LRU cache
+                parent.usersCache.set(u.id, u)
             })
         }
     }
 
+    // sanitizeUserId transform a chatKit user id to a suitable stream user id
     sanitizeUserId(id) {
         // todo improve me
         return id.replace(':', '_')
     }
 
     // converts a chatKit user to a stream user
-    async handleCreateUser(chatKitUser) {
-        await this.streamClient().updateUser(toStreamUser(user))
+    async createStreamUser(chatKitUser) {
+        await this.streamClient().updateUser(this.toStreamUser(chatKitUser))
     }
 
-    toStreamUser(chatKitUser){
-        return  {
+    // converts a chatKit user user to a a stream user
+    toStreamUser(chatKitUser) {
+        return {
             id: this.sanitizeUserId(chatKitUser.id),
-            image: chatKitUser.profile_image,// todo omit keys with empty values
+            image: chatKitUser.avatar_url,// todo omit keys with empty values
             name: chatKitUser.name,
             ...chatKitUser.custom_data,
         };
@@ -217,6 +221,7 @@ class StreamSync {
             type = 'messaging'
         }
 
+        await this.ensureMembersExists(room.member_user_ids)
         const streamChannel = this.streamClient().channel(type, room.id, {
             name: room.name,
             members: room.member_user_ids,
@@ -235,10 +240,13 @@ class StreamSync {
             text: message.text,
             attachments: [],
         }
+        const parent = this
 
         //build attachments
         message.parts.forEach(function (part) {
+            // url parts are added to the message body and scrapped server side
             if (part.url) {
+                parent.addUrl(streamMessage, part.url)
 
             } else {
                 switch (part.type) {
@@ -251,9 +259,18 @@ class StreamSync {
 
         return streamMessage
     }
+
+    addUrl(streamMessage, url) {
+        if (streamMessage.text) {
+            streamMessage.text += "\n"
+            streamMessage.text += url
+        } else {
+            streamMessage.text = url
+        }
+    }
 }
 
-let wrapper = new StreamSync(getStreamClient, getChatKitClient)
+let streamSync = new StreamSync(getStreamClient, getChatKitClient)
 
 app.use(
     bodyParser.text({
@@ -264,12 +281,15 @@ app.use(
 
 app.post("/pusher-webhooks", (req, res) => {
     if (verify(req)) {
-        // console.log("Got a request with body", req.body)
         const event = JSON.parse(req.body)
-        console.log(req.body)
-        console.log("\n")
-        if (wrapper.eventHandlers[event.metadata.event_type]) {
-            wrapper.eventHandlers[event.metadata.event_type](event)
+        if (streamSync.eventHandlers[event.metadata.event_type]) {
+            try {
+                streamSync.eventHandlers[event.metadata.event_type](event)
+            } catch (e) {
+                console.log(`error: ${event.metadata.event_type}\n request body:${req.body}`)
+            }
+        } else {
+            console.log(`error: No event handler defined for: ${event.metadata.event_type}`)
         }
         res.sendStatus(200)
     } else {
