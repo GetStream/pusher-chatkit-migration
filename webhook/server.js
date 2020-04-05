@@ -4,6 +4,7 @@ const crypto = require("crypto")
 const streamChat = require("stream-chat")
 const chatKit = require("@pusher/chatkit-server")
 const LRU = require("lru-cache")
+const request = require('request');
 
 
 const secret = `thesyncim`
@@ -80,7 +81,13 @@ class StreamSync {
             "v1.messages_created": function (event) {
                 event.payload.messages.forEach(async function (m) {
                     const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(m.room_id, m.user_id)))
-                    await channel.sendMessage(await parent.toStreamMessage(m))
+                    //console.log(JSON.stringify(m))
+                    try {
+                        await channel.sendMessage(await parent.toStreamMessage(channel,m))
+                    }catch (e) {
+                        console.log(e)
+                    }
+
                 })
             },
             "v1.messages_deleted": function (event) {
@@ -90,6 +97,7 @@ class StreamSync {
             },
             "v1.messages_edited": function (event) {
                 event.payload.messages.forEach(async function (m) {
+                    //todo grab the channel
                     const updated = await parent.toStreamMessage(m)
                     await parent.streamClient().updateMessage(updated, updated.user_id)
                 })
@@ -233,41 +241,83 @@ class StreamSync {
     }
 
     // converts a chatKit room to a stream channel
-    async toStreamMessage(message) {
+    async toStreamMessage(streamChannel, chatKitMessage) {
+        console.log("\n")
+        console.log(chatKitMessage.id)
+        console.log("\n")
         const streamMessage = {
-            id: message.id.toString(),
-            user_id: message.user_id,
-            text: message.text,
+            id: chatKitMessage.id.toString(),
+            user_id: chatKitMessage.user_id,
+            text: chatKitMessage.text,
             attachments: [],
         }
-        const parent = this
 
         //build attachments
-        message.parts.forEach(function (part) {
-            // url parts are added to the message body and scrapped server side
+        for (let i = 0; i < chatKitMessage.parts.length; i++) {
+            const part = chatKitMessage.parts[i]
             if (part.url) {
-                parent.addUrl(streamMessage, part.url)
+                this.addUrlPart(streamMessage, part)
+            } else if (part.attachment) {
+                try {
+                    await this.addAttachmentPart(streamChannel,streamMessage, part)
+                }catch (e) {
+                   throw (e)
+                }
 
             } else {
+                //inline part
                 switch (part.type) {
                     case 'text/plain':
                         streamMessage.text = part.content;
                 }
-                //todo handle other message parts
             }
-        })
+        }
 
         return streamMessage
     }
 
-    addUrl(streamMessage, url) {
+    // url parts are added to the message body and scrapped server side
+    addUrlPart(streamMessage, part) {
         if (streamMessage.text) {
             streamMessage.text += "\n"
-            streamMessage.text += url
+            streamMessage.text += part.url
         } else {
-            streamMessage.text = url
+            streamMessage.text = part.url
         }
     }
+
+    async addAttachmentPart(streamChannel, streamMessage, part) {
+        const isImage = part.type.startsWith("image/")
+        const streamAttachment = {
+            id: part.attachment.id,
+            file_size: part.attachment.size,
+            text: part.attachment.name,
+            mime_type: part.type,
+            type: part.type.split('/')[0],
+            ...part.attachment.custom_data,
+        }
+
+        const {err, response, buffer} = await this.downloadFile(part);
+        if (isImage) {
+            let resp = await streamChannel.sendImage(part.attachment.download_url, part.attachment.id, part.type, streamMessage.user_id)
+            resp.title_link = resp.file
+            resp.image_url = resp.file
+        } else {
+            let resp = await streamChannel.sendFile(part.attachment.download_url, part.attachment.id, part.type, streamMessage.user_id)
+            resp.asset_url = resp.file
+        }
+        streamMessage.attachments.push(streamAttachment)
+    }
+
+    downloadFile(part) {
+       return new Promise(resolve => {
+            request(part.attachment.download_url, {encoding: null}, (err, response, buffer) => {
+                resolve({err, response, buffer});
+            })
+        })
+    }
+
+
 }
 
 let streamSync = new StreamSync(getStreamClient, getChatKitClient)
