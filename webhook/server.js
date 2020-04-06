@@ -85,7 +85,7 @@ class StreamSync {
             "v1.messages_created": async function (event) {
                 event.payload.messages.forEach(async function (m) {
                     const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(m.room_id, m.user_id)))
-                        await channel.sendMessage(await parent.toStreamMessage(channel, m))
+                    await channel.sendMessage(await parent.toStreamMessage(channel, m))
                 })
             },
             "v1.messages_deleted": async function (event) {
@@ -125,7 +125,7 @@ class StreamSync {
                 await channel.addMembers(members)
             },
             "v1.user_left_room": async function (event) {
-                //still not sure whats the diference from v1.users_added_to_room
+                //still not sure whats the difference from v1.users_removed_from_room
                 const room = event.payload.room
                 const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 const members = [];
@@ -140,7 +140,7 @@ class StreamSync {
                 const room = event.payload.room
                 const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 const members = [];
-                // ensure usersCache exists
+                // ensure users exists
                 event.payload.users.forEach(async function (u) {
                     members.push(parent.sanitizeUserId(u.id))
                     await parent.createStreamUser(u)
@@ -206,12 +206,12 @@ class StreamSync {
         return id.replace(':', '_')
     }
 
-    // converts a chatKit user to a stream user
+    // creates a stream user from a chatKit user
     async createStreamUser(chatKitUser) {
         await this.streamClient().updateUser(this.toStreamUser(chatKitUser))
     }
 
-    // converts a chatKit user user to a a stream user
+    // converts a chatKit user to a stream user
     toStreamUser(chatKitUser) {
         return {
             id: this.sanitizeUserId(chatKitUser.id),
@@ -221,8 +221,8 @@ class StreamSync {
         };
     }
 
-    // converts a chatKit room to a stream channel
-    async getOrCreateRoom(room) {
+    // converts/create a chatKit room to a stream channel
+    async getOrCreateChannelFromRoom(room) {
         let type = 'livestream'
         if (room.private) {
             type = 'messaging'
@@ -239,7 +239,7 @@ class StreamSync {
         return streamChannel
     }
 
-    // converts a chatKit room to a stream channel
+    // converts a chatKit message to a stream channel
     async toStreamMessage(streamChannel, chatKitMessage) {
         const streamMessage = {
             id: chatKitMessage.id.toString(),
@@ -254,12 +254,17 @@ class StreamSync {
             if (part.url) {
                 this.addUrlPart(streamMessage, part)
             } else if (part.attachment) {
-                    await this.addAttachmentPart(streamChannel, streamMessage, part)
+                await this.addAttachmentPart(streamChannel, streamMessage, part)
             } else {
                 //inline part
                 switch (part.type) {
                     case 'text/plain':
                         streamMessage.text = part.content;
+                        break;
+                    default:
+                        // unrecognized part
+                        // save it as it is (require UI customization)
+                        streamChannel.attachments.push(part)
                 }
             }
         }
@@ -289,8 +294,8 @@ class StreamSync {
         }
 
         let tmpObj = tmp.fileSync({mode: '0644', prefix: 'pusher-download-'});
-        const { buffer,err} = await this.downloadFile(part);
-        if (err){
+        const {buffer, err} = await this.downloadFile(part);
+        if (err) {
             throw err
         }
         fs.appendFileSync(tmpObj.fd, buffer)
@@ -312,7 +317,7 @@ class StreamSync {
     downloadFile(part) {
         return new Promise(resolve => {
             request(part.attachment.download_url, {encoding: null}, (err, response, buffer) => {
-                resolve({buffer,err});
+                resolve({buffer, err});
             })
         })
     }
