@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@pusher/chatkit-server": "^2.4.0",
+    "body-parser": "^1.19.0",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "form-data": "^3.0.0",
+    "lru-cache": "^5.1.1",
+    "node-fetch": "^2.6.0",
+    "request": "^2.88.2",
+    "stream-chat": "^1.7.0",
+    "tmp": "^0.1.0"
+  }
+}
