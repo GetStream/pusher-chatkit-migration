@@ -79,12 +79,12 @@ class StreamSync {
         this.eventHandlers = {
             "v1.rooms_created": async function handleRoomsCreatedEvent(event) {
                 event.payload.rooms.forEach(async function (room) {
-                    await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
+                    await parent.getOrCreateChannelFromRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 })
             },
             "v1.messages_created": async function (event) {
                 event.payload.messages.forEach(async function (m) {
-                    const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(m.room_id, m.user_id)))
+                    const channel = await parent.getOrCreateChannelFromRoom((await parent.getChatKitRoom(m.room_id, m.user_id)))
                     await channel.sendMessage(await parent.toStreamMessage(channel, m))
                 })
             },
@@ -115,7 +115,7 @@ class StreamSync {
             },
             "v1.users_added_to_room": async function (event) {
                 const room = event.payload.room
-                const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
+                const channel = await parent.getOrCreateChannelFromRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 const members = [];
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
@@ -127,7 +127,7 @@ class StreamSync {
             "v1.user_left_room": async function (event) {
                 //still not sure whats the difference from v1.users_removed_from_room
                 const room = event.payload.room
-                const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
+                const channel = await parent.getOrCreateChannelFromRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 const members = [];
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
@@ -138,7 +138,7 @@ class StreamSync {
             },
             "v1.users_removed_from_room": async function (event) {
                 const room = event.payload.room
-                const channel = await parent.getOrCreateRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
+                const channel = await parent.getOrCreateChannelFromRoom((await parent.getChatKitRoom(room.id, room.created_by_id)))
                 const members = [];
                 // ensure users exists
                 event.payload.users.forEach(async function (u) {
