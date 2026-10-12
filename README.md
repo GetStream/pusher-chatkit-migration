@@ -1,3 +1,5 @@
+> **This repository is archived and no longer maintained.** For a current alternative, see [the Stream Chat import docs](https://getstream.io/chat/docs/node/import/).
+
 # Pusher Chatkit Migration
 
 Guide on how to Migrate Pusher Chatkit to Stream's [Chat API](https://getstream.io/chat/)
